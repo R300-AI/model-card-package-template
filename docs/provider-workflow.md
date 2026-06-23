@@ -8,7 +8,7 @@ Use this template to create your model package repository.
 
 ## 2. Update `model_card.yaml`
 
-Set the model identity, accelerator, supported features, image repository and tag. The CI gate checks this file against Dockerfile labels.
+Copy the non-secret Model Card draft and Publish Grant values shown by AI Hub WebUI into `model_card.yaml`. This file is the repository-local review copy of portal metadata. OCI labels are generated from this file during the workflow build, so providers should not hand-edit Dockerfile metadata labels.
 
 ## 3. Replace Model Runtime
 
@@ -39,4 +39,4 @@ Return to AI Hub WebUI and check the publish grant status. The site should show 
 - Do not edit callback payloads by hand.
 - Do not commit production license tokens, callback tokens, or ACR credentials.
 - Do not bypass the license guard from CLI, API, SDK or Open WebUI.
-- Do not change image labels without updating `model_card.yaml` and rerunning validation.
+- Do not hand-edit image metadata labels in Dockerfile; update AI Hub portal / `model_card.yaml` and rerun validation.

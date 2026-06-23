@@ -34,13 +34,14 @@ After the values are set, run **Actions > publish-model-card > Run workflow**, o
 
 The workflow will:
 
-1. Validate `model_card.yaml` and Dockerfile labels.
+1. Validate `model_card.yaml` and required publish settings.
 2. Run tests.
-3. Build the Docker image.
-4. Confirm `.so` guard is present and `guard.py` is absent from the runtime image.
-5. Push the image to AI Hub ACR.
-6. Resolve the pushed image digest.
-7. Report the result to AI Hub WebUI callback API.
+3. Generate OCI labels from `model_card.yaml`.
+4. Build the Docker image with generated labels.
+5. Confirm `.so` guard is present and `guard.py` is absent from the runtime image.
+6. Push the image to AI Hub ACR.
+7. Resolve the pushed image digest.
+8. Report the result to AI Hub WebUI callback API.
 
 ## Secret Boundaries
 

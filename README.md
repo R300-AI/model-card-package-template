@@ -8,7 +8,7 @@
 
 | 元件 | 用途 |
 | --- | --- |
-| `model_card.yaml` | Model Card metadata、部署目標、授權入口與 image 命名範本。 |
+| `model_card.yaml` | AI Hub portal 匯出的 Model Card metadata 副本、部署目標、授權入口與 image 命名範本。 |
 | `app/` | OpenAI-compatible gateway、echo runtime、CLI 與服務入口骨架。 |
 | `license_guard/` | ECDSA token 驗簽、期限、硬體 hash、feature 檢查的測試實作。 |
 | `Dockerfile` | 使用 Nuitka 將 `license_guard/guard.py` 編成 `.so` 的 multi-stage build。 |
@@ -19,7 +19,7 @@
 ## 使用流程
 
 1. 在 GitHub 選擇 **Use this template** 建立自己的模型封裝 repo。
-2. 更新 `model_card.yaml`，填入你的模型、accelerator、runtime、features 與 image path。
+2. 依 AI Hub WebUI 顯示的 Model Card 草稿 / Publish Grant 更新 `model_card.yaml`，填入模型、accelerator、runtime、features 與 image path。
 3. 將 `app/model_runtime.py` 的 echo runtime 換成你的模型載入與推論邏輯。
 4. 確認 `license_guard/guard.py` 的驗證欄位與 AI Hub 平台簽發 token 契約一致。
 5. 執行測試：
@@ -29,10 +29,11 @@
    python -m pytest -q
    ```
 
-6. 建置 image：
+6. 建置 image。OCI labels 由 `model_card.yaml` 產生，不需要手動維護 Dockerfile metadata labels：
 
    ```bash
-   docker build -t model-cards.azurecr.io/<vendor>/<accelerator>/<model>:<version> .
+   mapfile -t AIHUB_OCI_LABEL_ARGS < <(python -m tools.generate_oci_labels --format docker-build-args)
+   docker build -t model-cards.azurecr.io/<vendor>/<accelerator>/<model>:<version> "${AIHUB_OCI_LABEL_ARGS[@]}" .
    ```
 
 7. 用測試 token 驗證容器：
@@ -82,6 +83,7 @@ browser -> Open WebUI :3000 -> model-card gateway :8080/v1 -> license guard -> m
 - 有效 token 通過後，`/healthz` ready，`/v1/models` 只回傳單一模型。
 - CLI、API、OpenAI SDK 與 Open WebUI 必須共用同一個 license guard 狀態；Open WebUI 只能透過 `/v1` gateway 推論。
 - Runtime image 必須包含 `.so` 或等效 native module，且不得保留可直接修改的 `license_guard/guard.py`。
+- OCI labels 必須由 `model_card.yaml` / AI Hub portal metadata 產生，build 後需與 image config 逐項比對。
 - Log 不得輸出完整 token、signature、私鑰、公鑰來源路徑或硬體原始識別值。
 - 發布到 AI Hub ACR 必須透過 `publish-model-card` workflow，使用網站配發的 repository path 與 callback token。
 

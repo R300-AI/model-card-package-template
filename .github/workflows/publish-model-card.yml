@@ -49,15 +49,19 @@ jobs:
         run: python -m pytest -q
 
       - name: Build Docker image
-        run: docker build -t "$IMAGE_URI" .
+        shell: bash
+        run: |
+          mapfile -t AIHUB_OCI_LABEL_ARGS < <(python -m tools.generate_oci_labels --format docker-build-args)
+          docker build -t "$IMAGE_URI" "${AIHUB_OCI_LABEL_ARGS[@]}" .
 
       - name: Validate OCI labels
+        shell: bash
         run: |
-          test "$(docker image inspect "$IMAGE_URI" --format '{{ index .Config.Labels "aihub.package.kind" }}')" = "single-model-accelerator"
-          test "$(docker image inspect "$IMAGE_URI" --format '{{ index .Config.Labels "aihub.model.id" }}')" = "echo-model-template"
-          test "$(docker image inspect "$IMAGE_URI" --format '{{ index .Config.Labels "aihub.license.required" }}')" = "true"
-          test "$(docker image inspect "$IMAGE_URI" --format '{{ index .Config.Labels "aihub.security.guard" }}')" = "native-module"
-          test "$(docker image inspect "$IMAGE_URI" --format '{{ index .Config.Labels "aihub.security.guard.format" }}')" = "so"
+          python -m tools.generate_oci_labels > expected-oci-labels.txt
+          while IFS='=' read -r key expected; do
+            actual="$(docker image inspect "$IMAGE_URI" --format "{{ index .Config.Labels \"$key\" }}")"
+            test "$actual" = "$expected"
+          done < expected-oci-labels.txt
 
       - name: Validate compiled guard in runtime image
         run: docker run --rm "$IMAGE_URI" sh -c 'test ! -f /app/license_guard/guard.py && ls /app/license_guard/guard*.so'

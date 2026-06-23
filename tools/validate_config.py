@@ -1,7 +1,7 @@
 import argparse
 import re
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Dict, Iterable, List, Optional
 
 import yaml
 
@@ -47,7 +47,35 @@ def expected_image_uri(config: Dict[str, Any]) -> str:
     return f"{image['registry'].rstrip('/')}/{expected_image_repository(config)}:{expected_image_tag(config)}"
 
 
-def validate_config(config: Dict[str, Any], labels: Dict[str, str]) -> List[str]:
+def expected_oci_labels(config: Dict[str, Any]) -> Dict[str, str]:
+    model = config["model"]
+    deployment = config["deployment"]
+    license_config = config["license"]
+    gateway_url = f"http://127.0.0.1:{deployment['gateway_port']}"
+
+    labels = {
+        "aihub.package.kind": "single-model-accelerator",
+        "aihub.model.id": str(model["id"]),
+        "aihub.model.name": str(model["name"]),
+        "aihub.model.version": str(model["version"]),
+        "aihub.model.owner": str(model["owner"]),
+        "aihub.accelerator": str(deployment["accelerator"]),
+        "aihub.hardware.minimum": str(deployment["hardware_minimum"]),
+        "aihub.host.runtime": str(deployment["host_runtime"]),
+        "aihub.input.types": ",".join(model["input_types"]),
+        "aihub.entry.gateway": gateway_url,
+        "aihub.entry.api": f"{gateway_url}/v1",
+        "aihub.entry.webui": f"http://127.0.0.1:{deployment['webui_port']}",
+        "aihub.entry.cli": f"python -m app.cli --base-url {gateway_url}",
+        "aihub.license.required": str(license_config["required"]).lower(),
+        "aihub.license.env": str(license_config["env"]),
+        "aihub.security.guard": "native-module",
+        "aihub.security.guard.format": "so",
+    }
+    return labels
+
+
+def validate_config(config: Dict[str, Any], labels: Optional[Dict[str, str]] = None) -> List[str]:
     errors: List[str] = []
 
     model = config.get("model") or {}
@@ -62,31 +90,6 @@ def validate_config(config: Dict[str, Any], labels: Dict[str, str]) -> List[str]
     model_id = model.get("id")
     if not model_id:
         errors.append("Missing model.id.")
-    if labels.get("aihub.model.id") != model_id:
-        errors.append("Dockerfile label aihub.model.id must match model_card.yaml model.id.")
-
-    if labels.get("aihub.model.name") != model.get("name"):
-        errors.append("Dockerfile label aihub.model.name must match model.name.")
-
-    if labels.get("aihub.model.version") != model.get("version"):
-        errors.append("Dockerfile label aihub.model.version must match model.version.")
-
-    if labels.get("aihub.model.owner") != model.get("owner"):
-        errors.append("Dockerfile label aihub.model.owner must match model.owner.")
-
-    if labels.get("aihub.accelerator") != deployment.get("accelerator"):
-        errors.append("Dockerfile label aihub.accelerator must match deployment.accelerator.")
-
-    if labels.get("aihub.host.runtime") != deployment.get("host_runtime"):
-        errors.append("Dockerfile label aihub.host.runtime must match deployment.host_runtime.")
-
-    input_types = model.get("input_types") or []
-    if labels.get("aihub.input.types") != ",".join(input_types):
-        errors.append("Dockerfile label aihub.input.types must match model.input_types.")
-
-    for label_name, expected_value in REQUIRED_LABELS.items():
-        if labels.get(label_name) != expected_value:
-            errors.append(f"Dockerfile label {label_name} must be {expected_value}.")
 
     features = set(license_config.get("features") or [])
     missing_features = sorted(REQUIRED_FEATURES - features)
@@ -103,6 +106,15 @@ def validate_config(config: Dict[str, Any], labels: Dict[str, str]) -> List[str]
         if not image.get(key):
             errors.append(f"image.{key} is required.")
 
+    for key in ("gateway_port", "webui_port", "hardware_minimum"):
+        if not deployment.get(key):
+            errors.append(f"deployment.{key} is required.")
+
+    if not errors and labels is not None:
+        for label_name, expected_value in expected_oci_labels(config).items():
+            if labels.get(label_name) != expected_value:
+                errors.append(f"OCI label {label_name} must be {expected_value}.")
+
     return errors
 
 
@@ -116,11 +128,12 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Validate AI Hub Model Card package configuration.")
     parser.add_argument("--model-card", default="model_card.yaml")
     parser.add_argument("--dockerfile", default="Dockerfile")
+    parser.add_argument("--check-dockerfile-labels", action="store_true")
     parser.add_argument("--check-publish-env", action="store_true")
     args = parser.parse_args()
 
     config = load_yaml(Path(args.model_card))
-    labels = parse_dockerfile_labels(Path(args.dockerfile))
+    labels = parse_dockerfile_labels(Path(args.dockerfile)) if args.check_dockerfile_labels else None
     errors = validate_config(config, labels)
 
     if args.check_publish_env:
