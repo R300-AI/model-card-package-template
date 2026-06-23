@@ -1,0 +1,41 @@
+name: validate-model-card-container
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Run tests
+        run: python -m pytest -q
+
+      - name: Build Docker image
+        run: docker build -t aihub/model-card-package-template:test .
+
+      - name: Validate OCI labels
+        run: |
+          test "$(docker image inspect aihub/model-card-package-template:test --format '{{ index .Config.Labels "aihub.package.kind" }}')" = "single-model-accelerator"
+          test "$(docker image inspect aihub/model-card-package-template:test --format '{{ index .Config.Labels "aihub.model.id" }}')" = "echo-model-template"
+          test "$(docker image inspect aihub/model-card-package-template:test --format '{{ index .Config.Labels "aihub.license.required" }}')" = "true"
+          test "$(docker image inspect aihub/model-card-package-template:test --format '{{ index .Config.Labels "aihub.security.guard" }}')" = "native-module"
+          test "$(docker image inspect aihub/model-card-package-template:test --format '{{ index .Config.Labels "aihub.security.guard.format" }}')" = "so"
+
+      - name: Validate compiled guard in runtime image
+        run: |
+          docker run --rm aihub/model-card-package-template:test sh -c 'test ! -f /app/license_guard/guard.py && ls /app/license_guard/guard*.so'

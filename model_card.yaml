@@ -1,0 +1,28 @@
+model:
+  id: echo-model-template
+  name: Echo Model Template
+  version: 0.1.0
+  owner: example-provider
+  task: chat-completion
+  input_types:
+    - text
+
+deployment:
+  vendor: example
+  accelerator: cpu
+  host_runtime: none
+  gateway_port: 8080
+
+license:
+  required: true
+  env: AIHUB_LICENSE_KEY
+  features:
+    - api
+    - cli
+    - sdk
+    - webui
+
+image:
+  registry: model-cards.azurecr.io
+  repository: example/cpu/echo-model-template
+  tag: 0.1.0

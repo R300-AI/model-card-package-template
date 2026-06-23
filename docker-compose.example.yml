@@ -1,0 +1,8 @@
+services:
+  model-card:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      AIHUB_LICENSE_KEY: "${AIHUB_LICENSE_KEY}"
+      AIHUB_HARDWARE_FINGERPRINT: "${AIHUB_HARDWARE_FINGERPRINT:-local-dev-device}"
