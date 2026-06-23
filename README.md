@@ -4,7 +4,7 @@
 
 > 此 template 只提供上架封裝骨架、測試用 token 驗證流程與 CI gate。正式 `AIHUB_LICENSE_KEY` 由 AI Hub 平台的 `my-deployments` 配發；正式私鑰不得放入此 repo。
 
-30 秒版：你把自己的模型接進 `app/model_runtime.py`，把 AI Hub portal 顯示的非 secret metadata 放進 `model_card.yaml`，然後讓 GitHub Actions 自動 build、test、push image、callback 回報 AI Hub。
+30 秒版：你把自己的模型接進 `app/model_runtime.py`，把 AI Hub 顯示的非 secret metadata 放進 `model_card.yaml`，然後讓 GitHub Actions 自動 build、test、發布 image，最後回 AI Hub 看狀態。
 
 第一次跑通 echo template 約 15-30 分鐘；替換成真實模型通常取決於模型載入方式與 accelerator 環境。
 
@@ -73,7 +73,7 @@
    開啟 `http://127.0.0.1:3000`。Open WebUI 會透過 `http://model-card:8080/v1` 呼叫同一個 license guard 後方的模型 gateway。
 
 10. 將 AI Hub WebUI 顯示的發布憑證填入 GitHub Variables / Secrets，見 [GitHub Variables and Secrets](docs/github-variables-and-secrets.md)。
-11. 執行 `publish-model-card` GitHub Actions workflow，讓 CI 自動 push image、解析 digest 並 callback 回報 AI Hub。
+11. 執行 `publish-model-card` GitHub Actions workflow，讓 CI 自動發布 image 並回 AI Hub 回報狀態。
 
 ## Open WebUI 整合
 
@@ -96,7 +96,7 @@ browser -> Open WebUI :3000 -> model-card gateway :8080/v1 -> license guard -> m
 - Runtime image 必須包含 `.so` 或等效 native module，且不得保留可直接修改的 `license_guard/guard.py`。
 - OCI labels 必須由 `model_card.yaml` / AI Hub portal metadata 產生，build 後需與 image config 逐項比對。
 - Log 不得輸出完整 token、signature、私鑰、公鑰來源路徑或硬體原始識別值。
-- 發布到 AI Hub ACR 必須透過 `publish-model-card` workflow，使用網站配發的 repository path 與 callback token。
+- 發布到 AI Hub 必須透過 `publish-model-card` workflow，使用平台提供的發布設定與 GitHub Secrets。
 
 ## Provider Documents
 
@@ -112,10 +112,9 @@ browser -> Open WebUI :3000 -> model-card gateway :8080/v1 -> license guard -> m
 | Term | Meaning |
 | --- | --- |
 | Model Card | AI Hub 上顯示模型名稱、版本、支援硬體、入口與授權資訊的卡片。 |
-| Publish Grant | AI Hub 配發給 GitHub Actions 的發布憑證，只能推送指定 image path。 |
+| Publish settings | AI Hub 顯示給你填到 GitHub Variables / Secrets 的發布設定。 |
 | Deployment token | 部署者執行容器時注入的 `AIHUB_LICENSE_KEY`。 |
 | OCI label | 寫進 Docker image 的 metadata，由 `model_card.yaml` 產生。 |
-| Image digest | image 的不可變指紋，發布後由 workflow 回報 AI Hub。 |
 | License guard | 容器內檢查 `AIHUB_LICENSE_KEY` 的授權驗證程式。 |
 
 ## 與 AI Hub 文件的關係
