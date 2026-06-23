@@ -2,14 +2,23 @@
 
 模型提供者提交 AI Hub 上架審核前，請確認下列項目。
 
-## Metadata
+## Prepare
 
+- [ ] Repository created from this template.
+- [ ] AI Hub Model Card draft or PoC metadata is available.
+- [ ] Target accelerator/runtime is confirmed.
 - [ ] `model_card.yaml` 的 `model.id` 與 `/v1/models` 回傳值一致。
 - [ ] `model.name`、`model.version`、`model.owner` 已填寫。
 - [ ] `deployment.accelerator` 對應 AI Hub 核准的 accelerator path。
 - [ ] `license.env` 固定使用 `AIHUB_LICENSE_KEY`，除非 AI Hub 平台另行公告。
 
-## Container
+## Local Test
+
+- [ ] `app/model_runtime.py` 已替換成你的模型載入與推論邏輯。
+- [ ] `python -m tools.preflight` passes.
+- [ ] `python -m tools.generate_oci_labels` output matches expected Model Card metadata.
+
+## Docker Build
 
 - [ ] Image 使用固定版本 tag，不只依賴 `latest`。
 - [ ] Image labels 包含 `aihub.package.kind`、`aihub.model.id`、`aihub.license.required` 與 `aihub.security.guard.*`。
@@ -34,10 +43,22 @@
 - [ ] Open WebUI 使用 `docker-compose.open-webui.yml` 或等效部署，並指向模型 gateway 的 `/v1` endpoint。
 - [ ] SDK 與 Open WebUI 不把 `AIHUB_LICENSE_KEY` 當作 client API key。
 
+## GitHub Setup
+
+- [ ] GitHub Variables copied from AI Hub Publish Grant.
+- [ ] GitHub Secrets copied from AI Hub Publish Grant; values are not committed or pasted into chat.
+- [ ] Tag format uses `v*`, for example `v1.0.0`.
+
+## Publish
+
+- [ ] `publish-model-card` workflow run completed.
+- [ ] Callback step reported a result to AI Hub.
+- [ ] AI Hub status is `pending_review` or `published`; if `rejected`, the rejection reason is understood.
+
 ## Evidence
 
 - [ ] 附上 pytest 結果。
-- [ ] 附上 `python -m tools.validate_config` 結果。
+- [ ] 附上 `python -m tools.preflight` 結果。
 - [ ] 附上 Docker build 結果。
 - [ ] 附上 Open WebUI 啟動與連線到 `/v1/models` 的驗證結果。
 - [ ] 附上 `publish-model-card` workflow run URL。

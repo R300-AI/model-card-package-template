@@ -10,7 +10,7 @@ You are helping a model provider package one model into this AI Hub Model Card t
 
 Guide the provider to produce a container package that passes AI Hub publishing gates:
 
-- `model_card.yaml` is complete and consistent with Docker labels.
+- `model_card.yaml` is complete and can generate OCI labels.
 - `app/model_runtime.py` loads and runs the provider model.
 - The OpenAI-compatible gateway contract remains intact.
 - `AIHUB_LICENSE_KEY` is checked by the shared license guard before inference.
@@ -34,12 +34,11 @@ Do not ask the provider to paste ACR passwords, callback tokens, production lice
 
 1. Update `model_card.yaml`.
 2. Update `app/model_runtime.py` while preserving the gateway API shape.
-3. Check that Docker labels match `model_card.yaml`.
+3. Check that generated OCI labels come from `model_card.yaml`.
 4. Run or instruct the provider to run:
 
    ```bash
-   python -m tools.validate_config
-   python -m pytest -q
+   python -m tools.preflight
    ```
 
 5. Explain GitHub Variables vs Secrets using `docs/github-variables-and-secrets.md`.
@@ -50,6 +49,32 @@ Do not ask the provider to paste ACR passwords, callback tokens, production lice
    - `.so` guard missing
    - ACR credential failure
    - callback rejected
+
+## Beginner Explanations
+
+If the provider asks what a license guard is, explain:
+
+```text
+It is the model container's door lock. When someone runs the container, the guard checks AIHUB_LICENSE_KEY before the model becomes ready. API, CLI, SDK and Open WebUI all share that same check.
+```
+
+If the provider asks why `.so` is required, explain:
+
+```text
+The guard starts as Python source for development, then the runtime image keeps the compiled native module. This raises the cost of casually editing the validation logic. It is not a promise that software is impossible to crack.
+```
+
+If the provider asks whether Open WebUI is mandatory, explain:
+
+```text
+Open WebUI is only required when the Model Card declares the webui feature. API support is the minimum path; WebUI is an additional local/user-facing entry.
+```
+
+If the provider asks why callback exists, explain:
+
+```text
+GitHub Actions uses callback to tell AI Hub which image digest was pushed. AI Hub still verifies the registry manifest itself before accepting the result.
+```
 
 ## Secret Boundary
 

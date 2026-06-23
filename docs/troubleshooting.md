@@ -1,5 +1,27 @@
 # Troubleshooting
 
+Start with one command:
+
+```bash
+python -m tools.preflight
+```
+
+Fix the first `ERROR:` it prints, then run the command again.
+
+## Publish Workflow Failed
+
+Open GitHub **Actions > publish-model-card > latest run** and find the first failed step.
+
+| First failed step | Likely Cause | Action |
+| --- | --- | --- |
+| Validate publish settings | A required GitHub Variable or Secret is missing. | Re-copy values from AI Hub Publish Grant into GitHub Actions settings. |
+| Run tests | Model runtime or license behavior failed locally. | Run `python -m tools.preflight` and fix the first test failure. |
+| Build Docker image | Dockerfile or dependency install failed. | Check the build log; avoid editing license guard copy rules unless needed. |
+| Validate OCI labels | Generated labels do not match `model_card.yaml`. | Update `model_card.yaml`; do not hand-edit Dockerfile metadata labels. |
+| Validate compiled guard | Runtime image still has `guard.py` or lacks `guard*.so`. | Ensure runtime stage copies compiled `guard*.so` only. |
+| Login / Push Docker image | ACR credential expired or repository path is wrong. | Rotate/re-copy Publish Grant credentials. |
+| Report publish result to AI Hub | Callback token, callback URL or network failed. | Re-copy `AIHUB_CALLBACK_URL` and `AIHUB_CALLBACK_TOKEN`, then rerun workflow. |
+
 | Symptom | Likely Cause | Action |
 | --- | --- | --- |
 | `/healthz` returns `LICENSE_MISSING` | `AIHUB_LICENSE_KEY` is not set. | Copy a token from AI Hub `my-deployments` or use a test token in development. |

@@ -2,6 +2,13 @@
 
 This template keeps the provider workflow small: edit one config, replace one runtime, then let CI publish and report the artifact.
 
+## Before You Start
+
+- Confirm Python 3.11+ and Docker are installed.
+- Create a repository from this template with GitHub **Use this template**.
+- Keep production secrets out of chat, README, commits, issues and workflow logs.
+- If AI Hub provider portal is not available yet, use `model_card.yaml` as the PoC metadata copy and replace it later with portal-generated values.
+
 ## 1. Create Repository
 
 Use this template to create your model package repository.
@@ -12,14 +19,15 @@ Copy the non-secret Model Card draft and Publish Grant values shown by AI Hub We
 
 ## 3. Replace Model Runtime
 
-Replace `app/model_runtime.py` with your model loading and inference logic. Keep the public gateway contract unchanged unless AI Hub has approved a different API shape.
+Replace `app/model_runtime.py` with your model loading and inference logic. Keep the public gateway contract unchanged unless AI Hub has approved a different API shape. See [Replace Model Runtime](replace-model-runtime.md).
 
 ## 4. Validate Locally
 
 ```bash
-python -m tools.validate_config
-python -m pytest -q
+python -m tools.preflight
 ```
+
+`tools.preflight` checks config, generated OCI labels and pytest. Use `--check-publish-env` inside GitHub Actions or a controlled shell when you also want to confirm publish variables and secrets are present.
 
 ## 5. Configure GitHub Settings
 
@@ -27,11 +35,20 @@ Copy Variables and Secrets from AI Hub WebUI into GitHub Actions settings. See [
 
 ## 6. Publish
 
-Run the `publish-model-card` workflow. The workflow pushes the image to AI Hub ACR and reports the digest back to AI Hub WebUI.
+Run the `publish-model-card` workflow. Option A: push a tag such as `v1.0.0`. Option B: open GitHub **Actions > publish-model-card > Run workflow**. The workflow pushes the image to AI Hub ACR and reports the digest back to AI Hub WebUI.
 
 ## 7. Check AI Hub Status
 
-Return to AI Hub WebUI and check the publish grant status. The site should show whether the image was received, verified, rejected, or is pending review.
+Return to AI Hub WebUI and check the publish grant status.
+
+| Status | Meaning |
+| --- | --- |
+| `waiting_for_callback` | GitHub Actions has not reported a completed publish yet. |
+| `ci_failed` | Workflow failed before a usable image was reported. |
+| `image_received` | Callback arrived; AI Hub still needs to verify registry metadata. |
+| `pending_review` | Image passed automated checks and is waiting for platform review. |
+| `published` | Provider publishing work is complete for this version. |
+| `rejected` | Fix the shown issue, rerun preflight, then rerun publish. |
 
 ## What Providers Should Not Do
 

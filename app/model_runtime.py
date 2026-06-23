@@ -2,6 +2,8 @@ from app.schemas import ChatCompletionRequest
 
 
 class EchoModelRuntime:
+    """Replace internals only; keep constructor and generate() contract stable for the gateway."""
+
     def __init__(self, model_id: str) -> None:
         self.model_id = model_id
 

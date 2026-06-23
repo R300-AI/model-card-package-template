@@ -1,31 +1,31 @@
 model:
-  id: echo-model-template
-  name: Echo Model Template
-  version: 0.1.0
-  owner: example-provider
-  task: chat-completion
+  id: echo-model-template  # From AI Hub Model Card draft; must match /v1/models.
+  name: Echo Model Template  # Display name shown in AI Hub.
+  version: 0.1.0  # Release version; align with AIHUB_IMAGE_TAG.
+  owner: example-provider  # Provider account or organization.
+  task: chat-completion  # Keep aligned with gateway behavior.
   input_types:
-    - text
+    - text  # Used to generate aihub.input.types.
 
 deployment:
-  vendor: example
-  accelerator: cpu
-  hardware_minimum: CPU development environment
-  host_runtime: none
-  gateway_port: 8080
-  webui_port: 3000
-  webui_compose_file: docker-compose.open-webui.yml
+  vendor: example  # Directory-safe vendor/runtime owner name.
+  accelerator: cpu  # Use AI Hub-approved accelerator path.
+  hardware_minimum: CPU development environment  # Human-readable minimum host requirement.
+  host_runtime: none  # Host runtime such as rocm, cuda, ryzen-ai-software, or none.
+  gateway_port: 8080  # Model gateway port.
+  webui_port: 3000  # Open WebUI local port when webui feature is enabled.
+  webui_compose_file: docker-compose.open-webui.yml  # Required when license.features includes webui.
 
 license:
-  required: true
-  env: AIHUB_LICENSE_KEY
+  required: true  # Formal AI Hub Model Cards require license validation.
+  env: AIHUB_LICENSE_KEY  # Do not change unless AI Hub updates the contract.
   features:
-    - api
-    - cli
-    - sdk
-    - webui
+    - api  # Required for /v1/chat/completions.
+    - cli  # Enable when app/cli.py is supported.
+    - sdk  # Enable for OpenAI SDK-compatible usage.
+    - webui  # Enable when docker-compose.open-webui.yml is supported.
 
 image:
-  registry: model-cards.azurecr.io
-  repository: example/cpu/echo-model-template
-  tag: 0.1.0
+  registry: model-cards.azurecr.io  # From AI Hub Publish Grant.
+  repository: example/cpu/echo-model-template  # From AI Hub Publish Grant.
+  tag: 0.1.0  # Align with AIHUB_IMAGE_TAG.

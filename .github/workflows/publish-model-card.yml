@@ -30,7 +30,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
-      - name: Validate publish settings
+      - name: Run publish preflight
         env:
           AIHUB_ACR_LOGIN_SERVER: ${{ vars.AIHUB_ACR_LOGIN_SERVER }}
           AIHUB_IMAGE_REPOSITORY: ${{ vars.AIHUB_IMAGE_REPOSITORY }}
@@ -41,12 +41,8 @@ jobs:
           AIHUB_ACR_USERNAME: ${{ secrets.AIHUB_ACR_USERNAME }}
           AIHUB_ACR_PASSWORD: ${{ secrets.AIHUB_ACR_PASSWORD }}
           AIHUB_CALLBACK_TOKEN: ${{ secrets.AIHUB_CALLBACK_TOKEN }}
-        run: python -m tools.validate_config --check-publish-env
-
-      - name: Run tests
-        env:
           AIHUB_LICENSE_KEY: ${{ secrets.AIHUB_TEST_LICENSE_KEY }}
-        run: python -m pytest -q
+        run: python -m tools.preflight --check-publish-env
 
       - name: Build Docker image
         shell: bash

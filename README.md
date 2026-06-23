@@ -4,6 +4,18 @@
 
 > 此 template 只提供上架封裝骨架、測試用 token 驗證流程與 CI gate。正式 `AIHUB_LICENSE_KEY` 由 AI Hub 平台的 `my-deployments` 配發；正式私鑰不得放入此 repo。
 
+30 秒版：你把自己的模型接進 `app/model_runtime.py`，把 AI Hub portal 顯示的非 secret metadata 放進 `model_card.yaml`，然後讓 GitHub Actions 自動 build、test、push image、callback 回報 AI Hub。
+
+第一次跑通 echo template 約 15-30 分鐘；替換成真實模型通常取決於模型載入方式與 accelerator 環境。
+
+## Prerequisites
+
+- Python 3.11+。
+- Docker 與 Docker Compose。
+- GitHub repo 寫入權限。
+- AI Hub Model Card 草稿或 PoC 用 metadata。
+- AI Hub 提供的測試 license token；正式部署 token 不放進本 repo。
+
 ## 你會得到什麼
 
 | 元件 | 用途 |
@@ -20,13 +32,12 @@
 
 1. 在 GitHub 選擇 **Use this template** 建立自己的模型封裝 repo。
 2. 依 AI Hub WebUI 顯示的 Model Card 草稿 / Publish Grant 更新 `model_card.yaml`，填入模型、accelerator、runtime、features 與 image path。
-3. 將 `app/model_runtime.py` 的 echo runtime 換成你的模型載入與推論邏輯。
+3. 將 `app/model_runtime.py` 的 echo runtime 換成你的模型載入與推論邏輯；參考 [Replace Model Runtime](docs/replace-model-runtime.md)。
 4. 確認 `license_guard/guard.py` 的驗證欄位與 AI Hub 平台簽發 token 契約一致。
-5. 執行測試：
+5. 執行本機 preflight：
 
    ```bash
-   python -m tools.validate_config
-   python -m pytest -q
+   python -m tools.preflight
    ```
 
 6. 建置 image。OCI labels 由 `model_card.yaml` 產生，不需要手動維護 Dockerfile metadata labels：
@@ -90,10 +101,22 @@ browser -> Open WebUI :3000 -> model-card gateway :8080/v1 -> license guard -> m
 ## Provider Documents
 
 - [Provider Workflow](docs/provider-workflow.md)
+- [Replace Model Runtime](docs/replace-model-runtime.md)
 - [GitHub Variables and Secrets](docs/github-variables-and-secrets.md)
 - [Provider Checklist](docs/provider-checklist.md)
 - [License Token Contract](docs/license-token-contract.md)
 - [Troubleshooting](docs/troubleshooting.md)
+
+## Glossary
+
+| Term | Meaning |
+| --- | --- |
+| Model Card | AI Hub 上顯示模型名稱、版本、支援硬體、入口與授權資訊的卡片。 |
+| Publish Grant | AI Hub 配發給 GitHub Actions 的發布憑證，只能推送指定 image path。 |
+| Deployment token | 部署者執行容器時注入的 `AIHUB_LICENSE_KEY`。 |
+| OCI label | 寫進 Docker image 的 metadata，由 `model_card.yaml` 產生。 |
+| Image digest | image 的不可變指紋，發布後由 workflow 回報 AI Hub。 |
+| License guard | 容器內檢查 `AIHUB_LICENSE_KEY` 的授權驗證程式。 |
 
 ## 與 AI Hub 文件的關係
 
