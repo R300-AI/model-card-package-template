@@ -25,6 +25,7 @@
 5. 執行測試：
 
    ```bash
+   python -m tools.validate_config
    python -m pytest -q
    ```
 
@@ -59,7 +60,8 @@
 
    開啟 `http://127.0.0.1:3000`。Open WebUI 會透過 `http://model-card:8080/v1` 呼叫同一個 license guard 後方的模型 gateway。
 
-10. 推送 image，保存 digest，提交 AI Hub 上架審核。
+10. 將 AI Hub WebUI 顯示的發布憑證填入 GitHub Variables / Secrets，見 [GitHub Variables and Secrets](docs/github-variables-and-secrets.md)。
+11. 執行 `publish-model-card` GitHub Actions workflow，讓 CI 自動 push image、解析 digest 並 callback 回報 AI Hub。
 
 ## Open WebUI 整合
 
@@ -81,6 +83,15 @@ browser -> Open WebUI :3000 -> model-card gateway :8080/v1 -> license guard -> m
 - CLI、API、OpenAI SDK 與 Open WebUI 必須共用同一個 license guard 狀態；Open WebUI 只能透過 `/v1` gateway 推論。
 - Runtime image 必須包含 `.so` 或等效 native module，且不得保留可直接修改的 `license_guard/guard.py`。
 - Log 不得輸出完整 token、signature、私鑰、公鑰來源路徑或硬體原始識別值。
+- 發布到 AI Hub ACR 必須透過 `publish-model-card` workflow，使用網站配發的 repository path 與 callback token。
+
+## Provider Documents
+
+- [Provider Workflow](docs/provider-workflow.md)
+- [GitHub Variables and Secrets](docs/github-variables-and-secrets.md)
+- [Provider Checklist](docs/provider-checklist.md)
+- [License Token Contract](docs/license-token-contract.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ## 與 AI Hub 文件的關係
 

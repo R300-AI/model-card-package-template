@@ -37,7 +37,9 @@
 ## Evidence
 
 - [ ] 附上 pytest 結果。
+- [ ] 附上 `python -m tools.validate_config` 結果。
 - [ ] 附上 Docker build 結果。
 - [ ] 附上 Open WebUI 啟動與連線到 `/v1/models` 的驗證結果。
+- [ ] 附上 `publish-model-card` workflow run URL。
 - [ ] 附上 image URI 與 digest。
 - [ ] 附上無 token、無效 token、有效 token 的 smoke test log，且 log 不含 secret。

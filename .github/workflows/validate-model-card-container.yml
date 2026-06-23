@@ -23,7 +23,9 @@ jobs:
           python -m pip install -r requirements.txt
 
       - name: Run tests
-        run: python -m pytest -q
+        run: |
+          python -m tools.validate_config
+          python -m pytest -q
 
       - name: Build Docker image
         run: docker build -t aihub/model-card-package-template:test .
