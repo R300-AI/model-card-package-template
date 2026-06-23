@@ -31,11 +31,13 @@
 - [ ] `/v1/models` 只回傳此容器唯一模型。
 - [ ] `/v1/chat/completions` 或對應推論 endpoint 可用。
 - [ ] CLI 使用 gateway，不繞過 license guard。
-- [ ] SDK 與 WebUI 不把 `AIHUB_LICENSE_KEY` 當作 client API key。
+- [ ] Open WebUI 使用 `docker-compose.open-webui.yml` 或等效部署，並指向模型 gateway 的 `/v1` endpoint。
+- [ ] SDK 與 Open WebUI 不把 `AIHUB_LICENSE_KEY` 當作 client API key。
 
 ## Evidence
 
 - [ ] 附上 pytest 結果。
 - [ ] 附上 Docker build 結果。
+- [ ] 附上 Open WebUI 啟動與連線到 `/v1/models` 的驗證結果。
 - [ ] 附上 image URI 與 digest。
 - [ ] 附上無 token、無效 token、有效 token 的 smoke test log，且 log 不含 secret。

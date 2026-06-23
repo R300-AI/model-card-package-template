@@ -1,7 +1,6 @@
 from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
 
 from app.config import load_model_card
 from app.model_runtime import EchoModelRuntime
@@ -68,7 +67,10 @@ def chat_completions(request: ChatCompletionRequest):
     )
 
 
-@app.get("/", response_class=HTMLResponse)
-def webui_placeholder():
-    _require_license("webui")
-    return "<html><body><h1>AI Hub Model Card Template</h1><p>Replace this page with Open WebUI integration.</p></body></html>"
+@app.get("/")
+def gateway_root():
+    return {
+        "service": "AI Hub Model Card Gateway",
+        "model_id": model_id,
+        "webui": "Use docker-compose.open-webui.yml to run Open WebUI on http://127.0.0.1:3000.",
+    }

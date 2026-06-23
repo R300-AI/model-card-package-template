@@ -39,3 +39,6 @@ jobs:
       - name: Validate compiled guard in runtime image
         run: |
           docker run --rm aihub/model-card-package-template:test sh -c 'test ! -f /app/license_guard/guard.py && ls /app/license_guard/guard*.so'
+
+      - name: Validate Open WebUI compose file
+        run: docker compose -f docker-compose.open-webui.yml config

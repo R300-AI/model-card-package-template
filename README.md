@@ -12,6 +12,7 @@
 | `app/` | OpenAI-compatible gateway、echo runtime、CLI 與服務入口骨架。 |
 | `license_guard/` | ECDSA token 驗簽、期限、硬體 hash、feature 檢查的測試實作。 |
 | `Dockerfile` | 使用 Nuitka 將 `license_guard/guard.py` 編成 `.so` 的 multi-stage build。 |
+| `docker-compose.open-webui.yml` | 直接啟動官方 Open WebUI，並接到本 template 的 `/v1` gateway。 |
 | `tests/` | 授權必填、無效 token、過期 token、硬體不符、有效 token 的行為測試。 |
 | `.github/workflows/` | PR / push 時執行 pytest、Docker build、OCI label 與 `.so` guard 檢查。 |
 
@@ -50,14 +51,34 @@
    python -m app.cli --base-url http://127.0.0.1:8080 --prompt "hello"
    ```
 
-9. 推送 image，保存 digest，提交 AI Hub 上架審核。
+9. 啟動 Open WebUI：
+
+   ```bash
+   docker compose -f docker-compose.open-webui.yml up --build
+   ```
+
+   開啟 `http://127.0.0.1:3000`。Open WebUI 會透過 `http://model-card:8080/v1` 呼叫同一個 license guard 後方的模型 gateway。
+
+10. 推送 image，保存 digest，提交 AI Hub 上架審核。
+
+## Open WebUI 整合
+
+本 template 不自行實作 WebUI，也不提供假頁面。WebUI 入口直接使用官方 Open WebUI container：
+
+```text
+browser -> Open WebUI :3000 -> model-card gateway :8080/v1 -> license guard -> model runtime
+```
+
+`AIHUB_LICENSE_KEY` 只注入 `model-card` 容器。Open WebUI 的 `OPENAI_API_KEY` 只是 OpenAI-compatible client 佔位值，不得放入 AI Hub license token。
+
+正式發布時請將 `OPEN_WEBUI_IMAGE` pin 到通過驗收的 Open WebUI 版本，不要只依賴 `main` 或 `latest`。
 
 ## 上架前必須通過
 
 - 無 `AIHUB_LICENSE_KEY` 時，容器不得進入可推論狀態。
 - 無效 token、過期 token、硬體不符 token 必須被拒絕。
 - 有效 token 通過後，`/healthz` ready，`/v1/models` 只回傳單一模型。
-- CLI、API、OpenAI SDK 與 Open WebUI 必須共用同一個 license guard 狀態。
+- CLI、API、OpenAI SDK 與 Open WebUI 必須共用同一個 license guard 狀態；Open WebUI 只能透過 `/v1` gateway 推論。
 - Runtime image 必須包含 `.so` 或等效 native module，且不得保留可直接修改的 `license_guard/guard.py`。
 - Log 不得輸出完整 token、signature、私鑰、公鑰來源路徑或硬體原始識別值。
 

@@ -12,6 +12,8 @@ deployment:
   accelerator: cpu
   host_runtime: none
   gateway_port: 8080
+  webui_port: 3000
+  webui_compose_file: docker-compose.open-webui.yml
 
 license:
   required: true
